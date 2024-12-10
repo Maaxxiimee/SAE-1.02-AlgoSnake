@@ -18,7 +18,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 20000
+#define ATTENTE 2000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -42,7 +42,7 @@
 typedef char tPlateau[LARGEUR_PLATEAU+1][HAUTEUR_PLATEAU+1];
 
 int lesPommesX[NB_POMMES] = {75, 75, 78, 2, 8, 78, 74, 2, 72, 5};
-int lesPommesY[NB_POMMES] = { 35, 39, 2, 2, 5, 39, 33, 38, 35, 2};
+int lesPommesY[NB_POMMES] = {8, 39, 2, 2, 5, 39, 33, 38, 35, 2};
 
 void initPlateau(tPlateau plateau);
 void dessinerPlateau(tPlateau plateau);
@@ -55,7 +55,6 @@ void gotoxy(int x, int y);
 int kbhit();
 void disable_echo();
 void enable_echo();
-
 
 int main(){
     clock_t debut, fin;
@@ -113,8 +112,6 @@ int main(){
 		// 	case BAS 	: direction=BAS;	break;
 		// 	case DROITE : direction=DROITE; break;
 		// }
-		progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee, nbPommes);
-		nbProgression++;
 		if (pommeMangee){
             nbPommes++;
 			gagne = (nbPommes==NB_POMMES);
@@ -125,6 +122,7 @@ int main(){
 			
 		}
 		if (!gagne){
+			nbProgression++;
 			if (!collision){
 				usleep(ATTENTE);
 				if (kbhit()==1){
@@ -132,6 +130,10 @@ int main(){
 				}
 			}
 		}
+
+		progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee, nbPommes);
+		
+		
 	} while (touche != STOP && !collision && !gagne);
     enable_echo();
 	gotoxy(1, HAUTEUR_PLATEAU+1);
