@@ -18,7 +18,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 200000
+#define ATTENTE 20000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -58,9 +58,13 @@ void enable_echo();
 
 
 int main(){
-	// 2 tableaux contenant les positions des éléments qui constituent le serpent
+    clock_t debut, fin;
+    
+    debut = clock();
+
     int lesX[TAILLE];
 	int lesY[TAILLE];
+	int nbProgression = 0;
 
 	// représente la touche frappée par l'utilisateur : touche de direction ou pour l'arrêt
 	char touche;
@@ -110,6 +114,7 @@ int main(){
 		// 	case DROITE : direction=DROITE; break;
 		// }
 		progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee, nbPommes);
+		nbProgression++;
 		if (pommeMangee){
             nbPommes++;
 			gagne = (nbPommes==NB_POMMES);
@@ -130,6 +135,13 @@ int main(){
 	} while (touche != STOP && !collision && !gagne);
     enable_echo();
 	gotoxy(1, HAUTEUR_PLATEAU+1);
+
+	fin = clock();
+    clock_t nbTick = fin - debut;
+    
+    printf("Temps d'exécution : %ld ticks\n", nbTick);
+	printf("Nombre de progressions effectué : %d\n ", nbProgression);
+
 	return EXIT_SUCCESS;
 }
 
