@@ -20,7 +20,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 70000
+#define ATTENTE 50000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -135,9 +135,9 @@ int main(){
 					touche = getchar();
 				}
 			}
+			progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee, nbPommes, chemin);
 		}
 
-		progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee, nbPommes, chemin);
 		
 		
 	} while (touche != STOP && !collision && !gagne);
@@ -280,114 +280,118 @@ void choisirDirection(tPlateau plateau,int lesX[], int lesY[], char *direction, 
 	bool peutAller = true;
 	bool feuVertGauche = true;
 	bool feuVertDroit = true;
-	bool feuVertHaut = true;
-	bool feuVertBas = true;
 	
 	if (lesY[0] < destY) { // direction BAS
 		for (int i = 1; i < TAILLE; i++){
 			if ((lesY[i] == lesY[0]+i && lesX[i] == lesX[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE)){
 				va_se_toucher = true;	
 			}
-			if ((lesX[i]+1 == lesX[0] && lesY[i]+1 == lesY[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE)){
+			if ((lesX[1]+1 == lesX[0] && lesY[i] == lesY[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE) || (lesX[i]+1 == lesX[0] && lesY[i]+1 == lesY[0])){
 				feuVertGauche = false;
 			}
-			if ((lesX[i]-1 == lesX[0] && lesY[i]+1 == lesY[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE)){
+			if ((lesX[1]-1 == lesX[0] && lesY[i] == lesY[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE) || (lesX[i]-1 == lesX[0] && lesY[i]+1 == lesY[0])){
 				feuVertDroit = false;
 			}
 			if (sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] > lesY[0] && lesX[i] == lesX[0]){
 				peutAller = false;
 			}
 		}
-		if (!va_se_toucher && peutAller){
+		if (!va_se_toucher && peutAller && lesX[0] != 0){
 			*direction = BAS;
 		}
 		else if (!peutAller){
-			if (lesX[0] > destX && feuVertGauche){
+			if ((lesX[0] > destX && feuVertGauche ) || (lesX[0] > destX && !feuVertDroit)){
 				*direction = GAUCHE;
 			}
-			else if (lesX[0] < destX && feuVertDroit){
+			else if (feuVertDroit && (HAUTEUR_PLATEAU-lesY[0] > TAILLE || lesX[0] < destX)){
 				*direction = DROITE;
 			}
 			else{
 				*direction = HAUT;
 			}
 		}
-		else if (lesX[0] > destX && plateau[lesX[0]+1][lesY[0]] != BORDURE){
+		else if ((lesX[0] > destX && feuVertGauche) || (lesX[0] < destX && !feuVertDroit)){
 			*direction = GAUCHE;
 		}
-		else{
+		else if (feuVertDroit && (HAUTEUR_PLATEAU-lesY[0] > TAILLE || lesX[0] < destX)){
 			*direction = DROITE;
+		}
+		else{
+			*direction = HAUT;
 		}
 	}    	 
 	else if (lesY[0] > destY) { // direction HAUT
 		for (int i = 1; i < TAILLE; i++){
-			if ((lesY[i] == lesY[0]-i && lesX[i] == lesX[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE)){
+			if ((lesY[i] == lesY[0]-1 && lesX[i] == lesX[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE)){
 				va_se_toucher = true;	
 			}
-			if ((lesX[i]+1 == lesX[0] && lesY[i]-1 == lesY[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE)){
+			if ((lesX[1]+1 == lesX[0] && lesY[1] == lesY[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE) || (lesX[i]+1 == lesX[0] && lesY[i]-1 == lesY[0])){
 				feuVertGauche = false;
 			}
-			if ((lesX[i]-1 == lesX[0] && lesY[i]-1 == lesY[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE)){
+			if ((lesX[1]-1 == lesX[0] && lesY[i] == lesY[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE) || (lesX[i]-1 == lesX[0] && lesY[i]-1 == lesY[0])){
 				feuVertDroit = false;
 			}
 			if (sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] < lesY[0] && lesX[i] == lesX[0]){
 				peutAller = false;
 			}
 		}
-		if (!va_se_toucher && peutAller){
+		if (!va_se_toucher && peutAller && lesX[0] != 0){
 			*direction = HAUT;
 		}
 		else if (!peutAller){
 			if (lesX[0] > destX && feuVertGauche){
 				*direction = GAUCHE;
 			}
-			else if (lesX[0] < destX && feuVertDroit){
+			else if (feuVertDroit && (lesY[0] > TAILLE || lesX[0] < destX)){
 				*direction = DROITE;
 			}
 			else{
 				*direction = BAS;
 			}
 		}
-		else if (lesX[0] > destX && plateau[lesX[0]-1][lesY[0]] != BORDURE){
+		else if (lesX[0] > destX && feuVertGauche){
 			*direction = GAUCHE;
 		}
-		else{
+		else if (feuVertDroit && (lesY[0] > TAILLE || lesX[0] < destX)){
 			*direction = DROITE;
+		}
+		else{
+			*direction = BAS;
 		}
 	}
 	else if (lesX[0] < destX) { // direction DROITE 
 		for (int i = 1; i < TAILLE; i++){
-			if ((lesY[i] == lesY[0] && lesX[i]-i == lesX[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE)){
+			if ((lesY[i] == lesY[0] && lesX[i]-1 == lesX[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE)){
 				va_se_toucher = true;	
 			}
-			if ((lesX[i]+1 == lesX[0] && lesY[i]-1 == lesY[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE)){
+			if ((lesX[i]+1 == lesX[0] && lesY[1]-1 == lesY[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE) || (lesY[i]+1 == lesY[0] && lesX[i]-1 == lesX[0])){
 				feuVertGauche = false;
 			}
-			if ((lesX[i]+1 == lesX[0] && lesY[i]+1 == lesY[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE)){
+			if ((lesX[i]+1 == lesX[0] && lesY[1]+1 == lesY[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE) || (lesY[i]+1 == lesY[0] && lesX[i]+1 == lesX[0])){
 				feuVertDroit = false;
 			}
 			if (sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] == lesY[0] && lesX[i] > lesX[0]){
 				peutAller = false;
 			}
 		}
-		if (!va_se_toucher && peutAller){
+		if (!va_se_toucher && peutAller && lesY[0] != 0){
 			*direction = DROITE;
 		}
 		else if (!peutAller){
 			if (lesY[0] > destY && feuVertGauche){
 				*direction = HAUT;
 			}
-			else if (lesY[0] < destY && feuVertDroit){
+			else if (feuVertDroit && (LARGEUR_PLATEAU-lesX[0] > TAILLE || lesY[0] < destY)){
 				*direction = BAS;
 			}
 			else{
 				*direction = GAUCHE;
 			}
 		}
-		else if (lesY[0] > destY && plateau[lesX[0]][lesY[0]-1] != BORDURE){
+		else if (lesY[0] > destY && feuVertGauche){
 			*direction = HAUT;
 		}
-		else{
+		else if(feuVertDroit && (LARGEUR_PLATEAU-lesX[0] > TAILLE || lesY[0] < destY)){
 			*direction = BAS;
 		} 
 	}
@@ -396,35 +400,38 @@ void choisirDirection(tPlateau plateau,int lesX[], int lesY[], char *direction, 
 			if ((lesY[i] == lesY[0] && lesX[i]+i == lesX[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE)){
 				va_se_toucher = true;	
 			}
-			if ((lesX[i]-1 == lesX[0] && lesY[i]-1 == lesY[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE)){
+			if ((lesX[i]-1 == lesX[0] && lesY[1]-1 == lesY[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE) || (lesY[i]-1 == lesY[0] && lesX[i]-1 == lesX[0])){
 				feuVertGauche = false;
 			}
-			if ((lesX[i]-1 == lesX[0] && lesY[i]+1 == lesY[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE)){
+			if ((lesX[i]-1 == lesX[0] && lesY[1]+1 == lesY[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE) || (lesY[i]-1 == lesY[0] && lesX[i]+1 == lesX[0])){
 				feuVertDroit = false;
 			}
 			if (sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] == lesY[0] && lesX[i] < lesX[0]){
 				peutAller = false;
 			}
 		}
-		if (!va_se_toucher && peutAller){
+		if (!va_se_toucher && peutAller && lesY[0] != 0){
 			*direction = GAUCHE;
 		}
 		else if (!peutAller){
 			if (lesY[0] > destY && feuVertGauche){
 				*direction = HAUT;
 			}
-			else if (lesY[0] < destY && feuVertDroit){
+			else if (feuVertDroit && (LARGEUR_PLATEAU-lesX[0] > TAILLE || lesY[0] > destY)){
 				*direction = BAS;
 			}
 			else{
 				*direction = DROITE;
 			}
 		}
-		else if (lesY[0] > destY && plateau[lesX[0]][lesY[0]+1] != BORDURE){
+		else if (lesY[0] > destY && feuVertGauche){
 			*direction = HAUT;
 		}
-		else{
+		else if (feuVertDroit && (LARGEUR_PLATEAU-lesX[0] > TAILLE || lesY[0] > destY)){
 			*direction = BAS;
+		}
+		else{
+			*direction = DROITE;
 		}
 	}
 	// *direction = DROITE;
@@ -448,16 +455,16 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, lesPommesX[nbPommes], lesPommesY[nbPommes]);
 	}
 	else if (strcmp(chemin,"portailHaut") == 0){
-		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, LARGEUR_PLATEAU / 2, 1);
+		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, LARGEUR_PLATEAU / 2, 0);
 	}
 	else if (strcmp(chemin,"portailGauche") == 0){
-		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, 1, HAUTEUR_PLATEAU / 2);
+		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, 0, HAUTEUR_PLATEAU / 2);
 	}
 	else if (strcmp(chemin,"portailDroite") == 0){
-		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, LARGEUR_PLATEAU, HAUTEUR_PLATEAU / 2);
+		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, LARGEUR_PLATEAU+1, HAUTEUR_PLATEAU / 2);
 	}
 	else if (strcmp(chemin,"portailBas") == 0){
-		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, LARGEUR_PLATEAU / 2, HAUTEUR_PLATEAU);
+		choisirDirection(plateau,lesX, lesY, &direction, nbPommes, chemin, LARGEUR_PLATEAU / 2, HAUTEUR_PLATEAU+1);
 	}
 
 	for(int i=TAILLE-1 ; i>0 ; i--){
@@ -494,18 +501,18 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 		lesY[0] = HAUTEUR_PLATEAU;  // Téléportation de la tête
 		strcpy(chemin, checkMeilleurChemin(lesX, lesY, nbPommes));
 	}
-	else if (lesX[0] == LARGEUR_PLATEAU/2 && lesY[0] == HAUTEUR_PLATEAU && direction == BAS){
-		lesY[0] = 1;
+	else if (lesX[0] == LARGEUR_PLATEAU/2 && lesY[0] == HAUTEUR_PLATEAU+1 && direction == BAS){
+		lesY[0] = 0;
 		strcpy(chemin, checkMeilleurChemin(lesX, lesY, nbPommes));
 		
 	}
-	else if (lesX[0] == LARGEUR_PLATEAU && lesY[0] == HAUTEUR_PLATEAU/2 && direction == DROITE){
-		lesX[0] = 1;
+	else if (lesX[0] == LARGEUR_PLATEAU+1 && lesY[0] == HAUTEUR_PLATEAU/2 && direction == DROITE){
+		lesX[0] = 0;
 		strcpy(chemin, checkMeilleurChemin(lesX, lesY, nbPommes));
 		
 	}
-	else if (lesX[0]-1 == 0 && lesY[0] == HAUTEUR_PLATEAU/2 && direction == GAUCHE){
-		lesX[0] = LARGEUR_PLATEAU-1;
+	else if (lesX[0] == 0 && lesY[0] == HAUTEUR_PLATEAU/2 && direction == GAUCHE){
+		lesX[0] = LARGEUR_PLATEAU;
 		strcpy(chemin, checkMeilleurChemin(lesX, lesY, nbPommes));
 		
 	}
