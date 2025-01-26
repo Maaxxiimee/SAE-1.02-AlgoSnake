@@ -1,4 +1,4 @@
-// Executer avec la commande : cc version3.c -o version3 -Wall -lm
+// Executer avec la commande : gcc version4.c -o version4 -Wall -lm
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +23,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 200000
+#define ATTENTE 30000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -48,8 +48,8 @@
 typedef char tPlateau[LARGEUR_PLATEAU + 1][HAUTEUR_PLATEAU + 1];
 
 // Position des pommes
-int lesPommesX[NB_POMMES] = {40, 75, 78, 2, 9, 78, 74, 2, 72, 5};
-int lesPommesY[NB_POMMES] = {20, 38, 2, 2, 5, 38, 32, 38, 32, 2};
+int lesPommesX[NB_POMMES] = {45, 75, 78, 2, 9, 78, 74, 2, 72, 5};
+int lesPommesY[NB_POMMES] = {32, 38, 2, 2, 5, 38, 32, 38, 32, 2};
 
 // Position des paves
 int lesPavesX[NB_PAVE] = {4, 73, 4, 73, 38, 38};
@@ -266,8 +266,6 @@ void effacer(int x, int y)
 
 void dessinerSerpent(int lesX[], int lesY[])
 {
-	// affiche les anneaux puis la tête
-	int str[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
 	for (int i = 1; i < TAILLE; i++)
 	{
 		afficher(lesX[i], lesY[i], CORPS);
@@ -405,7 +403,7 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 		}
 	}
 	else if (lesY[0] > destY)
-	{	// direction HAUT
+	{ // direction HAUT
 		// Vérifie si la direction vers le haut est bloquée par une collision
 		for (int i = 1; i < TAILLE; i++)
 		{
@@ -461,7 +459,7 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 		}
 	}
 	else if (lesX[0] < destX)
-	{	// direction DROITE
+	{ // direction DROITE
 		// Vérifie si la direction vers la droitte est bloquée
 		for (int i = 1; i < TAILLE; i++)
 		{
@@ -517,7 +515,7 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 		}
 	}
 	else if (lesX[0] > destX)
-	{	// direction GAUCHE
+	{ // direction GAUCHE
 		// Vérifie si la direction vers la gauche est bloquée
 		for (int i = 1; i < TAILLE; i++)
 		{
@@ -584,13 +582,8 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 	// élémentds du serpent avant de le  redessiner et détecte une
 	// collision avec une pomme ou avec une bordure
 	effacer(lesX[TAILLE - 1], lesY[TAILLE - 1]);
-	bool vaSeToucher = false;
-	bool peutAller = true;
-	bool feuVertGauche = true;
-	bool feuVertDroit = true;
-	bool feuVertHaut = true;
-	bool feuVertBas = true;
 
+	// Envoie de la direction
 	if (strcmp(chemin, "normal") == 0)
 	{
 		choisirDirection(plateau, lesX, lesY, &direction, nbPommes, chemin, lesPommesX[nbPommes], lesPommesY[nbPommes], lesXAutreSerpent, lesYAutreSerpent);
@@ -642,9 +635,23 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 		plateau[lesX[0]][lesY[0]] = VIDE;
 	}
 	// détection d'une collision avec la bordure
-	// else if (plateau[lesX[0]][lesY[0]] == BORDURE){
-	// 	*collision = true;
-	// }
+	if (plateau[lesX[0]][lesY[0]] == BORDURE)
+	{
+		*collision = true;
+	}
+	// détection d'une collision avec l'autre serpent
+	for (int i = 0; i < TAILLE; i++)
+	{
+		if (lesX[0] == lesXAutreSerpent[i] && lesY[0] == lesYAutreSerpent[i])
+		{
+			*collision = true;
+		}
+	}
+	// détection d'une collision entre les têtes des serpents
+	if (lesX[0] == lesXAutreSerpent[0] && lesY[0] == lesYAutreSerpent[0])
+	{
+		*collision = true;
+	}
 	if (lesX[0] == LARGEUR_PLATEAU / 2 && lesY[0] == 0 && direction == HAUT)
 	{
 		lesY[0] = HAUTEUR_PLATEAU; // Téléportation de la tête
