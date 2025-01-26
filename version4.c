@@ -1,3 +1,5 @@
+// Executer avec la commande : cc version3.c -o version3 -Wall -lm
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -22,7 +24,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 100000
+#define ATTENTE 30000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -47,12 +49,16 @@
 // utilisées)
 typedef char tPlateau[LARGEUR_PLATEAU+1][HAUTEUR_PLATEAU+1];
 
+// Position des pommes
 int lesPommesX[NB_POMMES] = {40, 75, 78, 2, 9, 78, 74, 2, 72, 5};
 int lesPommesY[NB_POMMES] = {20, 38, 2, 2, 5, 38, 32, 38, 32, 2};
 
+// Position des paves
 int lesPavesX[NB_PAVE] = { 4, 73, 4, 73, 38, 38};
 int lesPavesY[NB_PAVE] = { 4, 4, 33, 33, 14, 22};
 
+
+// Entetes des fonctions et procedures
 void initPlateau(tPlateau plateau);
 void dessinerPlateau(tPlateau plateau);
 void ajouterPomme(tPlateau plateau, int nbPommes);
@@ -67,6 +73,7 @@ int kbhit();
 void disable_echo();
 void enable_echo();
 
+// Fonction principal
 int main(){
 	
     int lesX1[TAILLE];
@@ -101,7 +108,7 @@ int main(){
 		lesY1[i] = Y_INITIAL1;
 	}
 
-    for(int i=0 ; i<TAILLE ; i++){
+    for(int i= 0 ; i<TAILLE ; i++){
 		lesX2[i] = X_INITIAL2-i;
 		lesY2[i] = Y_INITIAL2;
 	}
@@ -248,12 +255,16 @@ void dessinerSerpent(int lesX[], int lesY[]){
 	afficher(lesX[0], lesY[0],TETE);
 }
 
+// Ici la fonction CheckMeilleurChemin calcul la meilleur distance et le meilleur parcours à emprunter afin d'atteindre la prochaine pomme
+// En effet, afin de calculer la distance la plus optimale, nous utilisons la formule Distance = racine carrée de (x2-x1)²+(y2-y1)²
+// Elle compare ensuite le résultat de chaque calcul et en déduit le chemin le plus optimal à emprunter 
+// La fonction considère aussi les portails comme des options pour raccourcir la distance
 char* checkMeilleurChemin(int lesX[], int lesY[], int nbPommes){
     static char chemin[30];
     float xDepart = lesX[0], yDepart = lesY[0];
     float xPomme = lesPommesX[nbPommes], yPomme = lesPommesY[nbPommes];
     
-    // Distances directes
+    // Calcul de la distance directe entre le serpent et la pomme.
     float plusCourtNormal = sqrt(pow((xDepart - xPomme), 2) + pow((yDepart - yPomme), 2));
     
     // Coordonnées des portails
@@ -291,31 +302,43 @@ char* checkMeilleurChemin(int lesX[], int lesY[], int nbPommes){
     return chemin;
 }
 
+// Ici, la fonction choisirDirection détermine la meilleure direction en fonction de la destination et des des obstacles ( comme son propre corps )
+// Elle analyse tour à tour les possibilités de tourner à gauche/droite/haut/bas
+// DLes variables comme vaSeToucher, peutAller, feuVertGauche et feuVertDroit permettent de vérifier la sûretée des déplacements
+// Si le chemin direct est bloqué, la fonction privilégie des alternatives basées sur la position de la destination
+// Dans la version 4, la fonction prend aussi en compte la position de l'autre serpent pour éviter les collisions
 void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction, int nbPommes, char chemin[20], int destX, int destY, int lesXAutreSerpent[], int lesYAutreSerpent[]){
-	bool va_se_toucher = false;
+	bool vaSeToucher = false;
 	bool peutAller = true;
 	bool feuVertGauche = true;
 	bool feuVertDroit = true;
 	
+	// Si la destination est en dessous de la position actuelle de la tête du serpen
 	if (lesY[0] < destY) { // direction BAS
 		for (int i = 1; i < TAILLE; i++){
+			// Vérifie si une collision avec un segment du serpent ou une bordure bloquera la direction vers le bas
 			if ((lesY[i] == lesY[0]+i && lesX[i] == lesX[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i]))){
-				va_se_toucher = true;	
+				vaSeToucher = true;	
 			}
+			// Vérifie si une collision avec un segment du serpent ou une bordure bloquera la direction vers la gauche
 			if ((lesX[1]+1 == lesX[0] && lesY[i] == lesY[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE) || (lesX[i]+1 == lesX[0] && lesY[i]+1 == lesY[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				feuVertGauche = false;
 			}
+			// Vérifie si une collision avec un segment du serpent ou une bordure bloquera la direction vers la droite
 			if ((lesX[1]-1 == lesX[0] && lesY[i] == lesY[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE) || (lesX[i]-1 == lesX[0] && lesY[i]+1 == lesY[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				feuVertDroit = false;
 			}
+			// Vérifie si une collision avec un segment du serpent bloquera la direction vers le bas
 			if ((sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] > lesY[0] && lesX[i] == lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				peutAller = false;
 			}
 		}
-		if (!va_se_toucher && peutAller && lesX[0] != 0){
+		// Choisit la direction si BAS est la destination
+		if (!vaSeToucher && peutAller && lesX[0] != 0){
 			*direction = BAS;
 		}
 		else if (!peutAller){
+			// Si le chemin direct est bloqué, tente de tourner à gauche ou à droite
 			if ((lesX[0] > destX && feuVertGauche ) || (lesX[0] > destX && !feuVertDroit)){
 				*direction = GAUCHE;
 			}
@@ -337,9 +360,10 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 		}
 	}    	 
 	else if (lesY[0] > destY) { // direction HAUT
+	// Vérifie si la direction vers le haut est bloquée par une collision
 		for (int i = 1; i < TAILLE; i++){
 			if ((lesY[i] == lesY[0]-1 && lesX[i] == lesX[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
-				va_se_toucher = true;	
+				vaSeToucher = true;	
 			}
 			if ((lesX[1]+1 == lesX[0] && lesY[1] == lesY[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE) || (lesX[i]+1 == lesX[0] && lesY[i]-1 == lesY[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				feuVertGauche = false;
@@ -350,11 +374,13 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 			if ((sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] < lesY[0] && lesX[i] == lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				peutAller = false;
 			}
+			// Choisit la direction si HAUT est la destinatio
 		}
-		if (!va_se_toucher && peutAller && lesX[0] != 0){
+		if (!vaSeToucher && peutAller && lesX[0] != 0){
 			*direction = HAUT;
 		}
 		else if (!peutAller){
+			// Alternatives si le chemin direct est bloqué
 			if ((lesX[0] >= destX && feuVertGauche) || (lesX[0] <= destX && !feuVertDroit)){
 				*direction = GAUCHE;
 			}
@@ -376,24 +402,31 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 		}
 	}
 	else if (lesX[0] < destX) { // direction DROITE 
+	// Vérifie si la direction vers la droitte est bloquée
 		for (int i = 1; i < TAILLE; i++){
+			// Vérifie si un segment du serpent ou une bordure bloque la droite
 			if ((lesY[1] == lesY[0] && lesX[1]-1 == lesX[0]) || (plateau[lesX[0]+1][lesY[0]] == BORDURE) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
-				va_se_toucher = true;	
+				vaSeToucher = true;	
 			}
+			// Vérifie si tourner à gauche depuis la droite est sûr
 			if ((lesX[i]+1 == lesX[0] && lesY[1]-1 == lesY[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE) || (lesY[i]+1 == lesY[0] && lesX[i]-1 == lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				feuVertGauche = false;
 			}
+			// Vérifie si tourner à droite depuis la droite est sûr
 			if ((lesX[i]+1 == lesX[0] && lesY[1]+1 == lesY[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE) || (lesY[i]+1 == lesY[0] && lesX[i]+1 == lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				feuVertDroit = false;
 			}
+			// Vérifie si le chemin direct est bloqué
 			if ((sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] == lesY[0] && lesX[i] > lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				peutAller = false;
 			}
 		}
-		if (!va_se_toucher && peutAller && lesY[0] != 0){
+		// Choisit la direction si DROITE est la destination
+		if (!vaSeToucher && peutAller && lesY[0] != 0){
 			*direction = DROITE;
 		}
 		else if (!peutAller){
+			// Alternatives si le chemin direct est bloqué
 			if ((lesX[0] >= destX && feuVertGauche) || (lesX[0] <= destX && !feuVertDroit)){
 				*direction = HAUT;
 			}
@@ -412,24 +445,31 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 		} 
 	}
 	else if (lesX[0] > destX) { // direction GAUCHE
+	// Vérifie si la direction vers la gauche est bloquée
 		for (int i = 1; i < TAILLE; i++){
+			// Vérifie si un segment du serpent ou une bordure bloque la gauche
 			if ((lesY[i] == lesY[0] && lesX[i]+1 == lesX[0]) || (plateau[lesX[0]-1][lesY[0]] == BORDURE) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
-				va_se_toucher = true;	
+				vaSeToucher = true;	
 			}
+			// Vérifie si tourner à gauche depuis la gauche est sûr
 			if ((lesX[i]-1 == lesX[0] && lesY[1]-1 == lesY[0]) || (plateau[lesX[0]][lesY[0]-1] == BORDURE) || (lesY[i]-1 == lesY[0] && lesX[i]-1 == lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				feuVertGauche = false;
 			}
+			// Vérifie si tourner à droite depuis la gauche est sûr
 			if ((lesX[i]-1 == lesX[0] && lesY[1]+1 == lesY[0]) || (plateau[lesX[0]][lesY[0]+1] == BORDURE) || (lesY[i]-1 == lesY[0] && lesX[i]+1 == lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				feuVertDroit = false;
 			}
+			// Vérifie si le chemin direct est bloqué
 			if ((sqrt(pow((lesX[0]-lesX[i]),2) + pow((lesY[0]-lesY[i]),2)) < i && lesY[i] == lesY[0] && lesX[i] < lesX[0]) || (lesX[i] == lesXAutreSerpent[i] && lesY[i] == lesYAutreSerpent[i])){
 				peutAller = false;
 			}
+			// Choisit la direction si GAUCHE est la destination
 		}
-		if (!va_se_toucher && peutAller && lesY[0] != 0){
+		if (!vaSeToucher && peutAller && lesY[0] != 0){
 			*direction = GAUCHE;
 		}
 		else if (!peutAller){
+			// Alternatives si le chemin direct est bloqué
 			if ((lesX[0] >= destX && feuVertGauche) || (lesX[0] <= destX && !feuVertDroit)){
 				*direction = HAUT;
 			}
@@ -450,7 +490,6 @@ void choisirDirection(tPlateau plateau, int lesX[], int lesY[], char *direction,
 			*direction = DROITE;
 		}
 	}
-	// *direction = DROITE;
 }
 
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme, int nbPommes, char chemin[20], int lesXAutreSerpent[], int lesYAutreSerpent[]){
@@ -458,7 +497,7 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 	// élémentds du serpent avant de le  redessiner et détecte une
 	// collision avec une pomme ou avec une bordure
 	effacer(lesX[TAILLE-1], lesY[TAILLE-1]);
-	bool va_se_toucher = false;
+	bool vaSeToucher = false;
 	bool peutAller = true;
 	bool feuVertGauche = true;
 	bool feuVertDroit = true;
